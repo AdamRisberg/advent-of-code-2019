@@ -8,8 +8,8 @@ program[2] = 2;
 
 const computer = new Computer();
 
-computer.setProgram(program);
-computer.compute();
+computer.loadProgram(program);
+computer.run();
 console.log(`Part 1: ${computer.getOutput()}`);
 
 computer.resetProgram();
