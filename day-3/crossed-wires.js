@@ -1,81 +1,4 @@
-function findNearestCrossing(wireA, wireB) {
-  const points = {};
-  let curPoint = { x: 0, y: 0 };
-
-  wireA
-    .map(input => getAdjustmentVector(input))
-    .forEach(movement => {
-      if (movement.x) {
-        const start = curPoint.x;
-        const end = curPoint.x + movement.x;
-        const inc = movement.x < 0 ? -1 : 1;
-
-        for (let x = start + inc; x - inc !== end; x += inc) {
-          const point = { x, y: curPoint.y };
-          const key = "A" + JSON.stringify(point);
-          points[key] = 1;
-        }
-      } else {
-        const start = curPoint.y;
-        const end = curPoint.y + movement.y;
-        const inc = movement.y < 0 ? -1 : 1;
-
-        for (let y = start + inc; y - inc !== end; y += inc) {
-          const point = { x: curPoint.x, y };
-          const key = "A" + JSON.stringify(point);
-          points[key] = 1;
-        }
-      }
-
-      curPoint.x += movement.x;
-      curPoint.y += movement.y;
-    });
-
-  curPoint = { x: 0, y: 0 };
-  wireB
-    .map(input => getAdjustmentVector(input))
-    .forEach(movement => {
-      if (movement.x) {
-        const start = curPoint.x;
-        const end = curPoint.x + movement.x;
-        const inc = movement.x < 0 ? -1 : 1;
-
-        for (let x = start + inc; x - inc !== end; x += inc) {
-          const point = { x, y: curPoint.y };
-          const key = "A" + JSON.stringify(point);
-          if (points[key]) points[key]++;
-        }
-      } else {
-        const start = curPoint.y;
-        const end = curPoint.y + movement.y;
-        const inc = movement.y < 0 ? -1 : 1;
-
-        for (let y = start + inc; y - inc !== end; y += inc) {
-          const point = { x: curPoint.x, y };
-          const key = "A" + JSON.stringify(point);
-          if (points[key]) points[key]++;
-        }
-      }
-
-      curPoint.x += movement.x;
-      curPoint.y += movement.y;
-    });
-
-  const matching = [];
-
-  for (let key in points) {
-    const trimKey = key.slice(1);
-    if (points[key] > 1) {
-      matching.push(JSON.parse(trimKey));
-    }
-  }
-
-  const distances = matching.map(pos => Math.abs(pos.x) + Math.abs(pos.y));
-  distances.sort((a, b) => a - b);
-  return distances[0];
-}
-
-function findShortestLengthCrossing(wireA, wireB) {
+function findClosestCrossing(wireA, wireB, byWireLength) {
   const points = {};
   let curPoint = { x: 0, y: 0 };
   let curDistance = 0;
@@ -83,44 +6,13 @@ function findShortestLengthCrossing(wireA, wireB) {
   wireA
     .map(input => getAdjustmentVector(input))
     .forEach(movement => {
-      if (movement.x) {
-        const start = curPoint.x;
-        const end = curPoint.x + movement.x;
-        const inc = movement.x < 0 ? -1 : 1;
-
-        for (let x = start + inc; x - inc !== end; x += inc) {
-          const point = { x, y: curPoint.y };
-          const key = JSON.stringify(point);
-
-          curDistance += 1;
-
-          if (points[key]) {
-            points[key].a.push(curDistance);
-          } else {
-            points[key] = { a: [curDistance] };
-          }
-        }
-      } else {
-        const start = curPoint.y;
-        const end = curPoint.y + movement.y;
-        const inc = movement.y < 0 ? -1 : 1;
-
-        for (let y = start + inc; y - inc !== end; y += inc) {
-          const point = { x: curPoint.x, y };
-          const key = JSON.stringify(point);
-
-          curDistance += 1;
-
-          if (points[key]) {
-            points[key].a.push(curDistance);
-          } else {
-            points[key] = { a: [curDistance] };
-          }
-        }
-      }
-
-      curPoint.x += movement.x;
-      curPoint.y += movement.y;
+      curDistance = setPoints(
+        movement,
+        curPoint,
+        points,
+        addPoint,
+        curDistance
+      );
     });
 
   curPoint = { x: 0, y: 0 };
@@ -129,50 +21,35 @@ function findShortestLengthCrossing(wireA, wireB) {
   wireB
     .map(input => getAdjustmentVector(input))
     .forEach(movement => {
-      if (movement.x) {
-        const start = curPoint.x;
-        const end = curPoint.x + movement.x;
-        const inc = movement.x < 0 ? -1 : 1;
-
-        for (let x = start + inc; x - inc !== end; x += inc) {
-          const point = { x, y: curPoint.y };
-          const key = JSON.stringify(point);
-
-          curDistance += 1;
-
-          if (points[key]) {
-            if (points[key].b) {
-              points[key].b.push(curDistance);
-            } else {
-              points[key].b = [curDistance];
-            }
-          }
-        }
-      } else {
-        const start = curPoint.y;
-        const end = curPoint.y + movement.y;
-        const inc = movement.y < 0 ? -1 : 1;
-
-        for (let y = start + inc; y - inc !== end; y += inc) {
-          const point = { x: curPoint.x, y };
-          const key = JSON.stringify(point);
-
-          curDistance += 1;
-
-          if (points[key]) {
-            if (points[key].b) {
-              points[key].b.push(curDistance);
-            } else {
-              points[key].b = [curDistance];
-            }
-          }
-        }
-      }
-
-      curPoint.x += movement.x;
-      curPoint.y += movement.y;
+      curDistance = setPoints(
+        movement,
+        curPoint,
+        points,
+        addMatchingPoint,
+        curDistance
+      );
     });
 
+  return byWireLength
+    ? findClosestByWireLength(points)
+    : findClosestByDistance(points);
+}
+
+function findClosestByDistance(points) {
+  const matching = [];
+
+  for (let key in points) {
+    if (points[key].a && points[key].b) {
+      matching.push(JSON.parse(key));
+    }
+  }
+
+  const distances = matching.map(pos => Math.abs(pos.x) + Math.abs(pos.y));
+  distances.sort((a, b) => a - b);
+  return distances[0];
+}
+
+function findClosestByWireLength(points) {
   const matching = [];
 
   for (let key in points) {
@@ -184,6 +61,56 @@ function findShortestLengthCrossing(wireA, wireB) {
   }
   matching.sort((a, b) => a - b);
   return matching[0];
+}
+
+function setPoints(movement, curPoint, points, addPoint, curLength) {
+  const movingX = !!movement.x;
+  const moveKey = movingX ? "x" : "y";
+  const staticKey = movingX ? "y" : "x";
+
+  const start = curPoint[moveKey];
+  const end = curPoint[moveKey] + movement[moveKey];
+  const inc = movement[moveKey] < 0 ? -1 : 1;
+
+  for (let i = start + inc; i - inc !== end; i += inc) {
+    const point = createOrderedCoordsObj(
+      moveKey,
+      i,
+      staticKey,
+      curPoint[staticKey]
+    );
+    curLength++;
+    const key = JSON.stringify(point);
+    addPoint(key, points, curLength);
+  }
+
+  curPoint.x += movement.x;
+  curPoint.y += movement.y;
+  return curLength;
+}
+
+function addPoint(key, points, curLength) {
+  if (points[key]) {
+    points[key].a.push(curLength);
+  } else {
+    points[key] = { a: [curLength] };
+  }
+}
+
+function addMatchingPoint(key, points, curLength) {
+  if (points[key]) {
+    if (points[key].b) {
+      points[key].b.push(curLength);
+    } else {
+      points[key].b = [curLength];
+    }
+  }
+}
+
+function createOrderedCoordsObj(keyA, valueA, keyB, valueB) {
+  return keyA === "x"
+    ? { [keyA]: valueA, [keyB]: valueB }
+    : { [keyB]: valueB, [keyA]: valueA };
 }
 
 function getAdjustmentVector(input) {
@@ -213,7 +140,6 @@ function getAdjustmentVector(input) {
 }
 
 module.exports = {
-  findNearestCrossing,
-  findShortestLengthCrossing,
+  findClosestCrossing,
   getAdjustmentVector
 };
