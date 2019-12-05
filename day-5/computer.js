@@ -1,4 +1,4 @@
-const readline = require("readline");
+const readlineSync = require("readline-sync");
 
 /**
  * Intcode computer
@@ -11,11 +11,14 @@ function Computer() {
   this.modeOne = false;
   this.modeTwo = false;
   this.modeThree = false;
+  this.inputsQueue = [];
+  this.outputs = [];
+  this.silentMode = false;
 }
 
 /**
  * Loads a new intcode program into memory
- * @param {Number[]} program Array of integers
+ * @param {Number[]} program  Array of integers representing program
  */
 Computer.prototype.loadProgram = function(program) {
   this.defaultProgram = program;
@@ -23,32 +26,33 @@ Computer.prototype.loadProgram = function(program) {
 };
 
 /**
- * Restores last loaded program to its initial state
+ * Queues one or more integers to be used as responses to input requests
+ * @param {Number\|Number[]}  inputs  Number or array of numbers representing user input(s)
  */
-Computer.prototype.resetProgram = function() {
-  this.program = [...this.defaultProgram];
+Computer.prototype.queueInputs = function(inputs) {
+  inputs = Array.isArray(inputs) ? inputs : [inputs];
+
+  // Reverse inputs in order to use pop for dequeueing
+  for (let i = inputs.length - 1; i >= 0; i--) {
+    this.inputsQueue.push(inputs[i]);
+  }
 };
 
 /**
- * Retrieves current program's output
- * @return {Number} Program output
+ * Restores last loaded program to its initial state.
  */
-Computer.prototype.getOutput = function() {
-  return this.program[0];
+Computer.prototype.resetProgram = function() {
+  this.program = [...this.defaultProgram];
+  this.inputsQueue = [];
+  this.outputs = [];
 };
 
-Computer.prototype.requestInput = function() {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  return new Promise(resolve => {
-    rl.question("Input: ", input => {
-      resolve(input);
-      rl.close();
-    });
-  });
+/**
+ * Retrieves current program's outputs
+ * @return {Number[]} Program outputs
+ */
+Computer.prototype.getOutputs = function() {
+  return this.outputs;
 };
 
 Computer.prototype.getParams = function() {
@@ -84,8 +88,15 @@ Computer.prototype.runOperationTwo = function() {
   this.curIdx += 4;
 };
 
-Computer.prototype.runOperationThree = async function() {
-  const input = await this.requestInput();
+Computer.prototype.runOperationThree = function() {
+  let input;
+
+  if (this.inputsQueue.length) {
+    input = this.inputsQueue.pop();
+  } else {
+    input = readlineSync.question("Input: ");
+  }
+
   const { indexA } = this.getParams();
 
   this.program[indexA] = Number(input);
@@ -94,8 +105,10 @@ Computer.prototype.runOperationThree = async function() {
 
 Computer.prototype.runOperationFour = function() {
   const { indexA } = this.getParams();
+  const output = this.program[indexA];
 
-  console.log("Output: " + this.program[indexA]);
+  this.outputs.push(output);
+  !this.silentMode && console.log(`Output: ${output}`);
   this.curIdx += 2;
 };
 
@@ -140,7 +153,8 @@ Computer.prototype.setModes = function(instruction) {
  * Runs current program
  * @return {Number[]} Program's state after running instructions
  */
-Computer.prototype.run = async function() {
+Computer.prototype.run = function(silentMode) {
+  this.silentMode = silentMode;
   this.curIdx = 0;
 
   while (this.curIdx < this.program.length) {
@@ -157,7 +171,7 @@ Computer.prototype.run = async function() {
         this.runOperationTwo();
         break;
       case "03":
-        await this.runOperationThree();
+        this.runOperationThree();
         break;
       case "04":
         this.runOperationFour();
@@ -175,7 +189,7 @@ Computer.prototype.run = async function() {
         this.runOperationEight();
         break;
       case "99":
-        return this.getOutput();
+        return this.outputs;
       case "00":
         this.curIdx++;
         break;
