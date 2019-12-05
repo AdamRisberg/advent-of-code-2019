@@ -8,6 +8,9 @@ function Computer() {
   this.defaultProgram = [];
   this.program = [];
   this.curIdx = 0;
+  this.modeOne = false;
+  this.modeTwo = false;
+  this.modeThree = false;
 }
 
 /**
@@ -48,111 +51,89 @@ Computer.prototype.requestInput = function() {
   });
 };
 
-Computer.prototype.runOperationOne = function(
-  modeOne = false,
-  modeTwo = false,
-  modeThree = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
-  const resultIdx = modeThree ? this.curIdx + 3 : this.program[this.curIdx + 3];
+Computer.prototype.getParams = function() {
+  const indexA = this.modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
+  const indexB = this.modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
+  const resultIdx = this.modeThree
+    ? this.curIdx + 3
+    : this.program[this.curIdx + 3];
 
   const valueA = this.program[indexA];
   const valueB = this.program[indexB];
 
-  this.program[resultIdx] = valueA + valueB;
+  return {
+    resultIdx,
+    valueA,
+    valueB,
+    indexA,
+    indexB
+  };
 };
 
-Computer.prototype.runOperationTwo = function(
-  modeOne = false,
-  modeTwo = false,
-  modeThree = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
-  const resultIdx = modeThree ? this.curIdx + 3 : this.program[this.curIdx + 3];
+Computer.prototype.runOperationOne = function() {
+  const { valueA, valueB, resultIdx } = this.getParams();
 
-  const valueA = this.program[indexA];
-  const valueB = this.program[indexB];
+  this.program[resultIdx] = valueA + valueB;
+  this.curIdx += 4;
+};
+
+Computer.prototype.runOperationTwo = function() {
+  const { valueA, valueB, resultIdx } = this.getParams();
 
   this.program[resultIdx] = valueA * valueB;
+  this.curIdx += 4;
 };
 
 Computer.prototype.runOperationThree = async function() {
   const input = await this.requestInput();
-  const resultIdx = this.program[this.curIdx + 1];
-  this.program[resultIdx] = Number(input);
+  const { indexA } = this.getParams();
+
+  this.program[indexA] = Number(input);
+  this.curIdx += 2;
 };
 
-Computer.prototype.runOperationFour = function(modeOne = false) {
-  const resultIdx = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  console.log("Output: " + this.program[resultIdx]);
+Computer.prototype.runOperationFour = function() {
+  const { indexA } = this.getParams();
+
+  console.log("Output: " + this.program[indexA]);
+  this.curIdx += 2;
 };
 
-Computer.prototype.runOperationFive = function(
-  modeOne = false,
-  modeTwo = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
+Computer.prototype.runOperationFive = function() {
+  const { valueA, valueB } = this.getParams();
 
-  const valueA = this.program[indexA];
-  const valueB = this.program[indexB];
-
-  if (!!valueA) {
-    this.curIdx = valueB;
-    return true;
-  }
-
-  return false;
+  this.curIdx = !!valueA ? valueB : this.curIdx + 3;
 };
 
-Computer.prototype.runOperationSix = function(
-  modeOne = false,
-  modeTwo = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
+Computer.prototype.runOperationSix = function() {
+  const { valueA, valueB } = this.getParams();
 
-  const valueA = this.program[indexA];
-  const valueB = this.program[indexB];
-
-  if (!valueA) {
-    this.curIdx = valueB;
-    return true;
-  }
-
-  return false;
+  this.curIdx = !valueA ? valueB : this.curIdx + 3;
 };
 
-Computer.prototype.runOperationSeven = function(
-  modeOne = false,
-  modeTwo = false,
-  modeThree = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
-  const resultIdx = modeThree ? this.curIdx + 3 : this.program[this.curIdx + 3];
-
-  const valueA = this.program[indexA];
-  const valueB = this.program[indexB];
+Computer.prototype.runOperationSeven = function() {
+  const { valueA, valueB, resultIdx } = this.getParams();
 
   this.program[resultIdx] = valueA < valueB ? 1 : 0;
+  this.curIdx += 4;
 };
 
-Computer.prototype.runOperationEight = function(
-  modeOne = false,
-  modeTwo = false,
-  modeThree = false
-) {
-  const indexA = modeOne ? this.curIdx + 1 : this.program[this.curIdx + 1];
-  const indexB = modeTwo ? this.curIdx + 2 : this.program[this.curIdx + 2];
-  const resultIdx = modeThree ? this.curIdx + 3 : this.program[this.curIdx + 3];
-
-  const valueA = this.program[indexA];
-  const valueB = this.program[indexB];
+Computer.prototype.runOperationEight = function() {
+  const { valueA, valueB, resultIdx } = this.getParams();
 
   this.program[resultIdx] = valueA === valueB ? 1 : 0;
+  this.curIdx += 4;
+};
+
+Computer.prototype.setModes = function(instruction) {
+  const instLength = instruction.length;
+  const modeOne = Number(instruction[instLength - 3]);
+  const modeTwo = Number(instruction[instLength - 4]);
+  const modeThree = Number(instruction[instLength - 5]);
+
+  this.modeOne = Boolean(modeOne);
+  this.modeTwo = Boolean(modeTwo);
+  this.modeThree = Boolean(modeThree);
 };
 
 /**
@@ -166,38 +147,32 @@ Computer.prototype.run = async function() {
     const instruction = this.program[this.curIdx] + "";
     const opcode = instruction.slice(-2).padStart(2, "0");
 
-    const modes = getModesArray(instruction);
+    this.setModes(instruction);
 
     switch (opcode) {
       case "01":
-        this.runOperationOne(...modes);
-        this.curIdx += 4;
+        this.runOperationOne();
         break;
       case "02":
-        this.runOperationTwo(...modes);
-        this.curIdx += 4;
+        this.runOperationTwo();
         break;
       case "03":
         await this.runOperationThree();
-        this.curIdx += 2;
         break;
       case "04":
-        this.runOperationFour(...modes);
-        this.curIdx += 2;
+        this.runOperationFour();
         break;
       case "05":
-        if (!this.runOperationFive(...modes)) this.curIdx += 3;
+        this.runOperationFive();
         break;
       case "06":
-        if (!this.runOperationSix(...modes)) this.curIdx += 3;
+        this.runOperationSix();
         break;
       case "07":
-        this.runOperationSeven(...modes);
-        this.curIdx += 4;
+        this.runOperationSeven();
         break;
       case "08":
-        this.runOperationEight(...modes);
-        this.curIdx += 4;
+        this.runOperationEight();
         break;
       case "99":
         return this.getOutput();
@@ -211,14 +186,5 @@ Computer.prototype.run = async function() {
 
   return this.program;
 };
-
-function getModesArray(instruction) {
-  const instLength = instruction.length;
-  const modeOne = Number(instruction[instLength - 3]);
-  const modeTwo = Number(instruction[instLength - 4]);
-  const modeThree = Number(instruction[instLength - 5]);
-
-  return [Boolean(modeOne), Boolean(modeTwo), Boolean(modeThree)];
-}
 
 module.exports = Computer;
