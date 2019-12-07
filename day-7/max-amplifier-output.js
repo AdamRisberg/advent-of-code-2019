@@ -1,14 +1,8 @@
 const Computer = require("./computer");
-const utils = require("./utils");
+const getPermutations = require("./permutations");
 
 function maxAmplifierOutput(program, phaseSettings) {
-  const phaseSequences = [];
-
-  utils.getPermutations([...phaseSettings], result => {
-    phaseSequences.push([...result]);
-  });
-
-  return phaseSequences.reduce((highest, sequence) => {
+  return getPermutations(phaseSettings).reduce((highest, sequence) => {
     const computers = [];
     let output = 0;
 
