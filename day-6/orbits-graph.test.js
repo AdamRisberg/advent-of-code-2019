@@ -36,6 +36,6 @@ describe("Orbits graph", () => {
       "I)SAN"
     ]);
 
-    expect(graph.getShortestPath("YOU", "SAN")).toBe(4);
+    expect(graph.getOrbitalDistance("YOU", "SAN")).toBe(4);
   });
 });
