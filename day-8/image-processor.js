@@ -39,9 +39,15 @@ function getDigitCounts(layer) {
   );
 }
 
-function compositeAndCreateImage(layers, width, height) {
+function compositeAndCreateImage(layers, width) {
   const composite = compositeLayers(layers);
   const rows = createRows(composite, width);
+  createImage(rows, 10, "Part2");
+}
+
+function createImage(rows, resizeMultiplier = 1, imageName) {
+  const width = rows[0].length;
+  const height = rows.length;
 
   initializeImage(width, height)
     .then(image => {
@@ -53,10 +59,12 @@ function compositeAndCreateImage(layers, width, height) {
       }
       return image;
     })
-    .then(image => image.write("Part2.jpg"))
-    .then(() => Jimp.read("Part2.jpg"))
-    .then(image => image.resize(width * 10, height * 10))
-    .then(image => image.write("Part2.jpg"))
+    .then(image => image.write(`${imageName}.jpg`))
+    .then(() => Jimp.read(`${imageName}.jpg`))
+    .then(image =>
+      image.resize(width * resizeMultiplier, height * resizeMultiplier)
+    )
+    .then(image => image.write(`${imageName}.jpg`))
     .catch(err => console.log(err));
 }
 
@@ -97,5 +105,6 @@ function initializeImage(width, height) {
 module.exports = {
   createImageLayers,
   getLeastZerosLayerInfo,
-  compositeAndCreateImage
+  compositeAndCreateImage,
+  createImage
 };
