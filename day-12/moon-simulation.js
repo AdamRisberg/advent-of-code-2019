@@ -1,3 +1,10 @@
+const utils = require("./utils");
+
+function simulateMoonsAndGetTotalEnergy(moons, stepsToSimulate) {
+  simulateMoons(moons, stepsToSimulate);
+  return getTotalEnergyOfMoons(moons);
+}
+
 function simulateMoons(moons, stepsToSimulate) {
   while (stepsToSimulate > 0) {
     const applied = new Set();
@@ -42,6 +49,16 @@ function getTotalEnergyOfMoons(moons) {
   }, 0);
 }
 
+function getFirstStateRepeatOfMoons(moons) {
+  const repeats = [
+    getFirstAxisStateRepeat(moons, "x"),
+    getFirstAxisStateRepeat(moons, "y"),
+    getFirstAxisStateRepeat(moons, "z")
+  ];
+
+  return utils.leastCommonMultipleOfArray(repeats);
+}
+
 function getFirstAxisStateRepeat(moons, axis) {
   let steps = 0;
   const states = new Set();
@@ -72,5 +89,6 @@ function getAxisState(moons, axis) {
 module.exports = {
   simulateMoons,
   getTotalEnergyOfMoons,
-  getFirstAxisStateRepeat
+  getFirstStateRepeatOfMoons,
+  simulateMoonsAndGetTotalEnergy
 };
