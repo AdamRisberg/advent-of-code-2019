@@ -5,7 +5,7 @@ function processSignal(transmission, phases, pattern) {
     processOnce(transmission, pattern);
     phases--;
   }
-  return transmission.slice(0, 8).join("");
+  return Number(transmission.slice(0, 8).join(""));
 }
 
 function processOnce(transmission, pattern) {
@@ -51,7 +51,7 @@ function processSignalWithRepeat(transmission, phases, repeat) {
     }
   }
 
-  return nums.slice(0, 8).join("");
+  return Number(nums.slice(0, 8).join(""));
 }
 
 function getNumOfRepeats(length, repeatInput, offset) {
