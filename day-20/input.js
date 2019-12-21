@@ -6,4 +6,9 @@ const input = fs.readFileSync(
   "UTF-8"
 );
 
-module.exports = input;
+const testInput = fs.readFileSync(
+  path.resolve(__dirname, "raw-test-input.txt"),
+  "UTF-8"
+);
+
+module.exports = { input, testInput };
