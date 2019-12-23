@@ -33,9 +33,8 @@ Computer.prototype.loadProgram = function(program) {
 Computer.prototype.queueInputs = function(inputs) {
   inputs = Array.isArray(inputs) ? inputs : [inputs];
 
-  // Reverse inputs in order to use pop for dequeueing
-  for (let i = inputs.length - 1; i >= 0; i--) {
-    this.inputsQueue.push(inputs[i]);
+  for (let i = 0; i < inputs.length; i++) {
+    this.inputsQueue.unshift(inputs[i]);
   }
 };
 
