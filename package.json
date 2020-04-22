@@ -7,14 +7,14 @@
     "test": "jest",
     "test-watch": "jest --watchAll"
   },
-  "author": "",
+  "author": "Adam Risberg",
   "license": "ISC",
   "devDependencies": {
-    "jest": "^24.9.0"
+    "jest": "^25.3.0"
   },
   "dependencies": {
     "big-integer": "^1.6.48",
-    "jimp": "^0.9.3",
+    "jimp": "^0.10.2",
     "readline-sync": "^1.4.10"
   }
 }
